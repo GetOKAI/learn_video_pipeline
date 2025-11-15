@@ -1,0 +1,29 @@
+[
+  {
+    "title": "Workplace Safety Script: “Think Safe, Work Safe”",
+    "enhanced_prompt": "**VIDEO PRODUCTION SCRIPT**\n\n**Title:** Think Safe, Work Safe\n\n**Duration:** 45 seconds\n\n---\n\n**SCENE SETTING:**\n\n*Location:* A bustling construction site in the early morning. We see workers in hard ...",
+    "script_result": {
+      "title": "Workplace Safety Script: “Think Safe, Work Safe”",
+      "enhanced_prompt": "**VIDEO PRODUCTION SCRIPT**\n\n**Title:** Think Safe, Work Safe\n\n**Duration:** 45 seconds\n\n---\n\n**SCENE SETTING:**\n\n*Location:* A bustling construction site in the early morning. We see workers in hard ...",
+      "error": "404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}",
+      "script_generation_timestamp": "2025-11-11T16:10:35.586442",
+      "status": "failed"
+    },
+    "video_results": [
+      {
+        "title": "Workplace Safety Script: “Think Safe, Work Safe”",
+        "enhanced_prompt": "**VIDEO PRODUCTION SCRIPT**\n\n**Title:** Think Safe, Work Safe\n\n**Duration:** 45 seconds\n\n---\n\n**SCENE SETTING:**\n\n*Location:* A bustling construction site in the early morning. We see workers in hard ...",
+        "video_file": "Workplace_Safety_Script_Think__veo-3_20251111_161157.mp4",
+        "file_path": "generated_videos/Workplace_Safety_Script_Think__veo-3_20251111_161157.mp4",
+        "file_size_mb": 3.07,
+        "video_generation_timestamp": "2025-11-11T16:11:59.059742",
+        "model_used": "veo-3.1-generate-preview",
+        "status": "success"
+      }
+    ],
+    "processing_timestamp": "2025-11-11T16:11:59.059874",
+    "successful_script": false,
+    "successful_videos": 1,
+    "total_videos_attempted": 1
+  }
+]
