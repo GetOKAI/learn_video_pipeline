@@ -9,6 +9,7 @@ __pycache__/
 # Virtualenv
 venv/
 env/
+video_automation/
 
 # IDE
 .vscode/
