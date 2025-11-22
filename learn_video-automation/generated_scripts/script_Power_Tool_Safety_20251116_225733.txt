@@ -1,0 +1,31 @@
+Title: Power Tool Safety
+Generated: 2025-11-16T22:57:33.885796
+============================================================
+
+**Title:** Power Tool Safety
+
+**Character Introductions:**
+*   **Mike (50s):** A seasoned carpenter, wise and practical, always prioritizes safety on the job site.
+*   **Elena (30s):** An eager and skilled apprentice electrician, always looking to learn best practices and absorb knowledge from experienced pros.
+
+---
+
+**Dialogue Script: Power Tool Safety**
+
+**(0-10 seconds)**
+**MIKE:** (Wiping down a circular saw, unplugged) Morning, Elena. Got your gear ready?
+**ELENA:** Hey Mike! Yep, grabbing my safety glasses. You always seem to give that saw a good once-over before you start.
+**MIKE:** (Chuckles) Habit, mostly. But it's a good one. Before you even plug a tool in, it's always worth a quick visual check.
+
+**(10-30 seconds)**
+**ELENA:** Like what specifically should I look for?
+**MIKE:** Well, first, make sure you've got the *right* tool for the specific task. Trying to force a small drill for a big job is just asking for trouble. Then, proper PPE – glasses, hearing protection, good gloves. And always, always secure your workpiece. Don't try to hold it with one hand while cutting.
+
+**(30-50 seconds)**
+**ELENA:** Makes sense. What about the tools themselves? Any quick maintenance tips?
+**MIKE:** Absolutely. Check those power cords for any frays or cuts. Make sure all the guards are in place and working properly. A dull blade or bit is actually more dangerous than a sharp one because you have to push harder. And if you ever need to adjust anything, like changing a blade? *Always* unplug it first. No exceptions.
+
+**(50-60 seconds)**
+**ELENA:** Got it. Really good to know, Mike.
+**MIKE:** You bet. A few seconds of caution can prevent a lifetime of regret. Always better safe than sorry.
+**MIKE/ELENA (together, looking at the camera with a nod):** Stay safe out there.

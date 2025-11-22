@@ -1,0 +1,30 @@
+Title: Ladder Safety Guide
+Generated: 2025-11-20T15:40:37.199197
+============================================================
+
+Here's your dialogue script for the Ladder Safety Guide:
+
+**Character Introductions:**
+*   **Maria (40s):** A seasoned construction foreman with a no-nonsense attitude and a strong commitment to safety. Her practical experience shines through.
+*   **Dave (20s):** A newer crew member, eager to learn and improve his skills, always ready to listen to advice from more experienced colleagues.
+
+---
+
+**(0-10 seconds)**
+**Dave:** (Struggling a bit to set up an extension ladder against a wall) Man, these things are always a bit fiddly, aren't they?
+**Maria:** (Walking over, observing) More than fiddly, Dave. They're dangerous if you rush. First thing, always check your ladder for damage – cracks, loose rungs. This one looks good.
+
+**(10-30 seconds)**
+**Maria:** Now, ground rules. Make sure your base is firm and level. No wobbles. And that angle, see? For every four feet up, the base should be one foot out from the wall. We call it the 4-to-1 rule. Stops it from sliding or tipping back.
+**Dave:** Ah, the 4-to-1! I always forget that. So, like, if it's 16 feet high, base should be 4 feet out?
+**Maria:** Exactly. And if you're climbing onto a roof, make sure the ladder extends at least three feet above the landing. Gives you a handhold.
+
+**(30-50 seconds)**
+**Dave:** Got it. So, once it's set...
+**Maria:** Three points of contact at all times, Dave. Two hands and one foot, or two feet and one hand. Don't carry too much, and never, ever overreach. If you can't reach, get down and move the ladder. Saves you a trip to the ER. And those top two rungs? Off-limits. Never stand on them.
+**Dave:** Yeah, I've seen guys try to stretch it. Not worth it.
+
+**(50-60 seconds)**
+**Maria:** Nope. One person at a time, clear the area around the base, and you're golden. A quick check before you climb can save a whole lot of pain.
+**Dave:** Appreciate the refresher, Maria. Makes sense.
+**Maria:** Always remember: a little caution goes a long way to getting home safe.
