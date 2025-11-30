@@ -100,7 +100,7 @@ Please create a natural 2-person dialogue script for this video concept. Make it
             full_prompt = self.system_prompt + "\n\n" + user_message
             
             response = self.client.models.generate_content(
-                model="gemini-1.5-flash",  # Fast model for script generation
+                model="gemini-2.5-flash",  # Fast model for script generation
                 contents=full_prompt
             )
             
@@ -115,7 +115,7 @@ Please create a natural 2-person dialogue script for this video concept. Make it
                 "actor_script": actor_script,
                 "script_generation_timestamp": datetime.now().isoformat(),
                 "tokens_used": len(actor_script.split()) if actor_script else 0,  # Approximate token count
-                "model_used": "gemini-1.5-flash",
+                "model_used": "gemini-2.5-flash",
                 "status": "success"
             }
             

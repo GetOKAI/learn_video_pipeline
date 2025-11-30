@@ -21,14 +21,14 @@ else:
     print("⚠️ GEMINI_API_KEY not found in .env — running in mock mode. LLM calls will return placeholders.")
 
 # File paths
-INPUT_FILE = "video_generation_prompts_filtered.json"
+INPUT_FILE = "Video_generation_prompts_filtered.json"
 ENHANCED_FILE = "enhanced_prompts.json"
 ACTOR_FILE = "transcripts_actor.json"
 FACELESS_FILE = "transcripts_faceless.json"
 
 # -------------------- HELPERS -------------------- #
 def load_human_prompts():
-    """Load human prompts from input JSON"""
+    """Load video generation prompts from filtered input JSON"""
     with open(INPUT_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -56,17 +56,17 @@ def run_pipeline():
         print(f"❌ Error: Input file '{INPUT_FILE}' not found.")
         return
 
-    human_prompts = load_human_prompts()
-    if not human_prompts:
+    video_prompts = load_human_prompts()
+    if not video_prompts:
         print("❌ Error: Input file is empty or invalid.")
         return
 
     enhanced_prompts, actor_scripts, faceless_scripts = [], [], []
 
-    for i, item in enumerate(human_prompts, start=1):
+    for i, item in enumerate(video_prompts, start=1):
         title = item.get("Video Title", f"Untitled_{i}")
         raw_prompt = item.get("Prompts used for original video", "")
-        print(f"\n🎯 Processing {i}/{len(human_prompts)} → {title}")
+        print(f"\n🎯 Processing {i}/{len(video_prompts)} → {title}")
 
         # Step 1: Enhance prompt
         enhanced = generate_llm_response(f"Enhance this prompt for creativity:\n{raw_prompt}")
@@ -98,7 +98,7 @@ def run_pipeline():
 
     print("\n✅ Pipeline executed successfully!")
     print(f"📁 Files saved:\n   - {ENHANCED_FILE}\n   - {ACTOR_FILE}\n   - {FACELESS_FILE}")
-    print(f"🧮 Total processed: {len(human_prompts)} prompts\n")
+    print(f"🧮 Total processed: {len(video_prompts)} prompts\n")
 
 # -------------------- FLASK APP (Optional API Wrapper) -------------------- #
 app = Flask(__name__)
@@ -114,3 +114,26 @@ if __name__ == "__main__":
 
     # Start Flask server (useful for GCP or Cloud Run health checks)
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)), debug=False)
+
+
+"""
+enhancement_prompt = f
+Transform this basic video prompt into a comprehensive, engaging video production brief:
+
+Original prompt: {raw_prompt}
+Video title: {title}
+
+Create an enhanced prompt that includes:
+1. Clear visual storytelling elements
+2. Specific scenes and transitions
+3. Target audience considerations (blue-collar workers)
+4. Practical, actionable content focus
+5. Engagement hooks and emotional resonance
+6. Technical production guidance
+7. Call-to-action integration
+
+Make it detailed enough for professional video production while keeping it authentic and relatable for working-class audiences.
+
+Format as a complete video production brief, not just a sentence enhancement.
+
+"""

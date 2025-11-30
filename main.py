@@ -16,7 +16,7 @@ import asyncio
 from pathlib import Path
 
 # Import our pipeline components
-from complete_pipeline import CompletePipeline
+from video_gen import CompletePipeline
 
 # Initialize FastAPI app
 app = FastAPI(
