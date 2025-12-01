@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  pipeline:
+    build: .
+    container_name: learn_video_pipeline
+    env_file:
+      - .env
+      - ./mux-access-token-video_gen.env
+    volumes:
+      - ./generated_videos:/app/generated_videos
+      - ./generated_scripts:/app/generated_scripts
+    ports:
+      - "8080:8080"
+    command: ["python","run.py","--mode","complete"]

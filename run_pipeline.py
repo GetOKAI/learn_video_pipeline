@@ -18,7 +18,7 @@ from pathlib import Path
 import script_gen
 
 # Import video pipeline
-from video_gen import CompletePipeline
+from video_generation import CompletePipeline
 
 class UnifiedPipeline:
     """Unified pipeline that connects script generation with video production"""
