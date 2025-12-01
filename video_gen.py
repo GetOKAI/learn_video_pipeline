@@ -12,7 +12,7 @@ import time
 import argparse
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -22,19 +22,32 @@ class ScriptGenerator:
     """Generates actor dialogue scripts from enhanced prompts using Gemini"""
     
     def __init__(self):
-        # Use consistent Gemini authentication
+        # Use same authentication as video generator
         self.gemini_api_key = os.getenv('GEMINI_API_KEY')
-        
-        if not self.gemini_api_key:
-            print("⚠️ GEMINI_API_KEY not found in .env — script generation will use mock responses.")
-            self.model = None
-            return
+        self.project_id = os.getenv('GEMINI_PROJECT_ID')
+        self.sa_file = os.getenv('SERVICE_ACCOUNT_FILE') or os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
 
-        # Configure Gemini with API key
+        # Determine auth approach
+        use_apikey = bool(self.gemini_api_key)
+        use_adc = bool(self.sa_file)
+
+        if not (use_apikey or use_adc):
+            raise ValueError("No Gemini credentials found. Set GEMINI_API_KEY or SERVICE_ACCOUNT_FILE/GOOGLE_APPLICATION_CREDENTIALS")
+
+        # Configure authentication
         try:
-            genai.configure(api_key=self.gemini_api_key)
-            self.model = genai.GenerativeModel("gemini-2.5-flash")
-            print("✅ Gemini configured for script generation")
+            if use_apikey:
+                os.environ['GOOGLE_API_KEY'] = self.gemini_api_key
+                print("ℹ️ Using GEMINI_API_KEY for script generation")
+            else:
+                os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = self.sa_file
+                print(f"ℹ️ Using service account for script generation: {self.sa_file}")
+
+            if self.project_id:
+                os.environ['GOOGLE_CLOUD_PROJECT'] = self.project_id
+
+            self.client = genai.Client()
+            print("✅ Gemini Client initialized for script generation")
         except Exception as e:
             raise Exception(f"Failed to initialize Gemini client for script generation: {str(e)}")
         
@@ -71,16 +84,6 @@ Focus on making the script feel like a real conversation between colleagues or f
             dict: Script generation result with dialogue and metadata
         """
         try:
-            if self.model is None:
-                # Mock response when API key is missing
-                return {
-                    "title": title,
-                    "enhanced_prompt": enhanced_prompt[:200] + "..." if len(enhanced_prompt) > 200 else enhanced_prompt,
-                    "actor_script": f"[MOCK SCRIPT] Two-person dialogue for: {title}",
-                    "script_generation_timestamp": datetime.now().isoformat(),
-                    "status": "success_mock"
-                }
-
             user_message = f"""
 Title: {title}
 
@@ -90,10 +93,13 @@ Enhanced Video Prompt:
 Please create a natural 2-person dialogue script for this video concept. Make it conversational and authentic for blue-collar workers.
 """
 
-            # Use consistent Gemini API pattern
+            # Use Gemini's content generation for script generation
             full_prompt = self.system_prompt + "\n\n" + user_message
             
-            response = self.model.generate_content(full_prompt)
+            response = self.client.models.generate_content(
+                model="gemini-2.5-flash",  # Fast model for script generation
+                contents=full_prompt
+            )
             
             actor_script = response.text.strip() if response.text else ""
             
@@ -125,24 +131,34 @@ class VideoGenerator:
     """Generates videos from enhanced prompts using Google Gemini/Veo"""
     
     def __init__(self):
-        # Use consistent Gemini authentication
+        # Authentication options: API key or service account JSON
         self.gemini_api_key = os.getenv('GEMINI_API_KEY')
-        
-        if not self.gemini_api_key:
-            print("⚠️ GEMINI_API_KEY not found in .env — video generation will use mock responses.")
-            self.model = None
-            return
+        self.project_id = os.getenv('GEMINI_PROJECT_ID')
+        self.sa_file = os.getenv('SERVICE_ACCOUNT_FILE') or os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
 
-        # Configure Gemini with API key
+        # Determine auth approach
+        use_apikey = bool(self.gemini_api_key)
+        use_adc = bool(self.sa_file)
+
+        if not (use_apikey or use_adc):
+            raise ValueError("No Gemini credentials found. Set GEMINI_API_KEY or SERVICE_ACCOUNT_FILE/GOOGLE_APPLICATION_CREDENTIALS")
+
+        # Configure authentication
         try:
-            genai.configure(api_key=self.gemini_api_key)
-            # For video generation, we'll simulate the process since actual video generation
-            # might require special access or different APIs
-            self.model = genai.GenerativeModel("gemini-2.5-flash")
-            print("✅ Gemini configured for video generation prompts")
+            if use_apikey:
+                os.environ['GOOGLE_API_KEY'] = self.gemini_api_key
+                print("ℹ️ Using GEMINI_API_KEY for video generation")
+            else:
+                os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = self.sa_file
+                print(f"ℹ️ Using service account for video generation: {self.sa_file}")
+
+            if self.project_id:
+                os.environ['GOOGLE_CLOUD_PROJECT'] = self.project_id
+
+            self.client = genai.Client()
+            print("✅ Google GenAI Client initialized successfully")
         except Exception as e:
-            print(f"❌ Failed to configure Gemini: {str(e)}")
-            self.model = None
+            raise Exception(f"Failed to initialize GenAI client: {str(e)}")
         
         # Create output directory
         self.output_dir = "generated_videos"
@@ -163,157 +179,81 @@ class VideoGenerator:
 
     def generate_video(self, enhanced_prompt: str, title: str = "", model: str = "veo-3") -> Dict:
         """
-        Generate video content and save to file using Gemini-enhanced prompts
+        Generate a video from enhanced prompt using Gemini/Veo
         
         Args:
             enhanced_prompt (str): The enhanced prompt text
             title (str): Video title
-            model (str): Model preference (for future use)
+            model (str): Model to use (veo-3, veo-fast, etc.)
             
         Returns:
-            dict: Video generation result with file path
+            dict: Video generation result with file path and metadata
         """
         try:
-            # Create filename first
+            resolved_model = self._resolve_model(model)
+            print(f"🎬 Generating video: {title[:50]} (model={resolved_model})...")
+            
+            # Generate video using Veo API
+            operation = self.client.models.generate_videos(
+                model=resolved_model,
+                prompt=enhanced_prompt,
+            )
+            
+            print("⏳ Waiting for video generation to complete...")
+            
+            # Poll until completion
+            while not operation.done:
+                print("🔄 Still generating video...")
+                time.sleep(10)
+                operation = self.client.operations.get(operation)
+            
+            # Check if generation was successful
+            if not operation.response or not operation.response.generated_videos:
+                raise Exception("No video was generated in the response")
+            
+            # Download the generated video
+            generated_video = operation.response.generated_videos[0]
+            
+            # Create filename
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).rstrip()
             safe_title = safe_title.replace(' ', '_')[:30]
-            filename = f"{safe_title}_{timestamp}.mp4"
+            model_tag = model.replace('/', '_')
+            filename = f"{safe_title}_{model_tag}_{timestamp}.mp4"
             filepath = os.path.join(self.output_dir, filename)
             
-            if self.model is None:
-                # Create mock video file when API key is missing
-                self._create_mock_video_file(filepath, title, enhanced_prompt)
-                
-                return {
-                    "title": title,
-                    "enhanced_prompt": enhanced_prompt[:200] + "..." if len(enhanced_prompt) > 200 else enhanced_prompt,
-                    "video_file": filename,
-                    "file_path": filepath,
-                    "file_size_mb": round(os.path.getsize(filepath) / (1024 * 1024), 2),
-                    "generation_timestamp": datetime.now().isoformat(),
-                    "model_used": f"mock-{model}",
-                    "status": "success",
-                    "note": "Mock video file created - replace with real video when API available"
-                }
-
-            # Generate enhanced video production prompt using Gemini
-            print("🎨 Enhancing video prompt with Gemini...")
-            video_prompt_enhancement = f"""
-You are a professional video production assistant. Create a comprehensive video production script based on this prompt:
-
-Original prompt: {enhanced_prompt}
-Video title: {title}
-
-Generate a detailed video production guide including:
-1. Scene-by-scene breakdown with timestamps
-2. Visual descriptions and camera angles
-3. Audio/voiceover instructions
-4. Text overlays and graphics
-5. Background music suggestions
-6. Color scheme and visual style
-7. Target audience engagement strategies
-
-Format as a professional production script ready for video creation.
-"""
-
-            response = self.model.generate_content(video_prompt_enhancement)
-            enhanced_video_prompt = response.text.strip() if response.text else enhanced_prompt
-            
-            print("🎬 Creating video content based on enhanced prompt...")
-            
-            # Create video content file (simulated video generation)
-            self._create_enhanced_video_file(filepath, title, enhanced_prompt, enhanced_video_prompt)
+            # Download and save the video
+            self.client.files.download(file=generated_video.video)
+            generated_video.video.save(filepath)
             
             file_size = os.path.getsize(filepath)
             
             result = {
                 "title": title,
-                "original_prompt": enhanced_prompt[:200] + "..." if len(enhanced_prompt) > 200 else enhanced_prompt,
-                "enhanced_video_prompt": enhanced_video_prompt,
+                "enhanced_prompt": enhanced_prompt[:200] + "..." if len(enhanced_prompt) > 200 else enhanced_prompt,
                 "video_file": filename,
                 "file_path": filepath,
                 "file_size_mb": round(file_size / (1024 * 1024), 2),
-                "generation_timestamp": datetime.now().isoformat(),
-                "model_used": f"gemini-2.5-flash-enhanced-{model}",
-                "status": "success",
-                "note": "Enhanced video prompt and metadata saved - ready for professional video production"
+                "video_generation_timestamp": datetime.now().isoformat(),
+                "model_used": resolved_model,
+                "status": "success"
             }
             
-            print(f"✅ Video content saved to: {filepath}")
+            print(f"✅ Video generated successfully!")
+            print(f"📁 Saved to: {filepath}")
+            print(f"📊 File size: {result['file_size_mb']} MB")
+            
             return result
             
         except Exception as e:
-            print(f"❌ Video generation error: {str(e)}")
+            print(f"❌ Video generation failed: {str(e)}")
             return {
                 "title": title,
                 "enhanced_prompt": enhanced_prompt[:200] + "..." if len(enhanced_prompt) > 200 else enhanced_prompt,
                 "error": str(e),
-                "generation_timestamp": datetime.now().isoformat(),
+                "video_generation_timestamp": datetime.now().isoformat(),
                 "status": "failed"
             }
-    
-    def _create_mock_video_file(self, filepath: str, title: str, prompt: str):
-        """Create a mock video file with metadata when API key is missing"""
-        mock_content = f"""Mock Video File: {title}
-Generated: {datetime.now().isoformat()}
-
-This is a placeholder video file created because GEMINI_API_KEY is not available.
-In a production environment, this would be replaced with an actual video file.
-
-Original Prompt:
-{prompt}
-
-Video Specifications:
-- Duration: 30-60 seconds
-- Resolution: 1920x1080
-- Format: MP4
-- Target: Blue-collar workers
-- Platform: ok.ai
-
-To generate real videos:
-1. Set up GEMINI_API_KEY in .env file
-2. Configure Veo API access (when available)
-3. Or integrate with other video generation services
-
-File size: Mock content (~1KB)
-"""
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(mock_content)
-    
-    def _create_enhanced_video_file(self, filepath: str, title: str, original_prompt: str, enhanced_prompt: str):
-        """Create an enhanced video content file with production instructions"""
-        video_content = f"""Enhanced Video Production File: {title}
-Generated: {datetime.now().isoformat()}
-
-=== PRODUCTION READY VIDEO INSTRUCTIONS ===
-
-Original Prompt:
-{original_prompt}
-
-=== ENHANCED PRODUCTION SCRIPT ===
-{enhanced_prompt}
-
-=== TECHNICAL SPECIFICATIONS ===
-- Format: MP4, 1920x1080, 30fps
-- Duration: 30-60 seconds  
-- Audio: Clear voiceover, background music
-- Style: Professional, relatable to blue-collar workers
-- Platform: ok.ai
-
-=== NEXT STEPS ===
-1. Use this enhanced prompt with video generation services
-2. Record voiceover based on generated script
-3. Add appropriate visuals and graphics
-4. Include ok.ai branding and outro
-
-This file contains all the instructions needed for professional video production.
-Ready for input into video generation APIs or manual production workflow.
-
-Generated with Gemini {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-"""
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(video_content)
 
 class CompletePipeline:
     """Complete pipeline that generates both scripts and videos from enhanced prompts"""
@@ -352,74 +292,49 @@ class CompletePipeline:
         script_result = self.script_generator.generate_script(enhanced_prompt, title)
         
         # Save script if successful
-        script_filepath = None
-        if script_result.get("status") in ["success", "success_mock"]:
-            script_filename = f"script_{title.replace(' ', '_').replace('/', '_')[:30]}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        if script_result.get("status") == "success":
+            script_filename = f"script_{title.replace(' ', '_')[:30]}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
             script_filepath = os.path.join(self.scripts_dir, script_filename)
             
-            try:
-                with open(script_filepath, 'w', encoding='utf-8') as f:
-                    f.write(f"Title: {title}\n")
-                    f.write(f"Generated: {datetime.now().isoformat()}\n")
-                    f.write("=" * 60 + "\n\n")
-                    f.write(script_result.get("actor_script", "No script content available"))
-                
-                script_result["script_file"] = script_filename
-                script_result["script_path"] = script_filepath
-                print(f"✅ Script saved to: {script_filepath}")
-            except Exception as e:
-                print(f"⚠️ Warning: Could not save script file: {e}")
+            with open(script_filepath, 'w', encoding='utf-8') as f:
+                f.write(f"Title: {title}\n\n")
+                f.write(script_result["actor_script"])
+            
+            script_result["script_file"] = script_filename
+            script_result["script_path"] = script_filepath
+            print(f"✅ Script saved to: {script_filepath}")
         else:
-            print(f"❌ Script generation failed: {script_result.get('error', 'Unknown error')}")
+            print(f"❌ Script generation failed: {script_result.get('error')}")
         
         # Step 2: Generate video(s)
         print(f"\n🎬 Step 2: Generating video(s) with models: {video_models}")
         video_results = []
         
         for model in video_models:
-            print(f"\n🔄 Generating video with model: {model}")
+            print(f"\n🔄 Generating with model: {model}")
             video_result = self.video_generator.generate_video(enhanced_prompt, title, model)
             video_results.append(video_result)
             
             if video_result.get("status") == "success":
-                print(f"✅ Video generated successfully with {model}")
-                print(f"📁 Video file: {video_result.get('video_file')}")
-                print(f"💾 File size: {video_result.get('file_size_mb', 0)} MB")
-            elif video_result.get("status") == "mock_success":
-                print(f"✅ Mock video created with {model}")
-                print(f"📁 Mock file: {video_result.get('video_file')}")
+                print(f"✅ Video generated with {model}")
             else:
-                print(f"❌ Video generation failed with {model}: {video_result.get('error', 'Unknown error')}")
+                print(f"❌ Video generation failed with {model}: {video_result.get('error')}")
             
             # Rate limiting between models
             if len(video_models) > 1:
-                time.sleep(2)
+                time.sleep(5)
         
         # Combine results
-        successful_videos = len([v for v in video_results if v.get("status") in ["success", "mock_success"]])
-        
         combined_result = {
             "title": title,
             "enhanced_prompt": enhanced_prompt[:200] + "..." if len(enhanced_prompt) > 200 else enhanced_prompt,
             "script_result": script_result,
             "video_results": video_results,
             "processing_timestamp": datetime.now().isoformat(),
-            "successful_script": script_result.get("status") in ["success", "success_mock"],
-            "successful_videos": successful_videos,
-            "total_videos_attempted": len(video_results),
-            "script_file_path": script_result.get("script_path", None),
-            "video_file_paths": [v.get("file_path") for v in video_results if v.get("file_path")]
+            "successful_script": script_result.get("status") == "success",
+            "successful_videos": len([v for v in video_results if v.get("status") == "success"]),
+            "total_videos_attempted": len(video_results)
         }
-        
-        # Print summary
-        print(f"\n📊 Processing Summary:")
-        print(f"   Script: {'✅ Generated' if combined_result['successful_script'] else '❌ Failed'}")
-        print(f"   Videos: {successful_videos}/{len(video_results)} successful")
-        if script_filepath:
-            print(f"   Script saved: {script_filepath}")
-        for video_result in video_results:
-            if video_result.get("file_path"):
-                print(f"   Video saved: {video_result['file_path']}")
         
         return combined_result
 
