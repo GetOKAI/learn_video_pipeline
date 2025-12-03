@@ -17,3 +17,11 @@ video_automation/
 # Environment variables (secrets)
 .env
 .env.local
+
+# Generated artifacts and runtime files
+jobs.json
+generated_videos/
+generated_scripts/
+video_generation_results_*.json
+*.mp4
+.pytest_cache/

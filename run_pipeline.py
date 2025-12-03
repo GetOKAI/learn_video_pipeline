@@ -53,7 +53,8 @@ class UnifiedPipeline:
     def run_video_generation_from_enhanced_prompts(self, 
                                                   enhanced_prompts_file: str = "enhanced_prompts.json",
                                                   video_models: List[str] = None,
-                                                  limit: Optional[int] = None) -> Dict:
+                                                  limit: Optional[int] = None,
+                                                  upload_mode: str = "none") -> Dict:
         """
         Run video generation using existing enhanced prompts
         
@@ -85,10 +86,21 @@ class UnifiedPipeline:
         
         print(f"📹 Processing {len(enhanced_prompts)} enhanced prompts for video generation")
         print(f"🎥 Video models: {video_models}")
+        print(f"📤 Upload mode: {upload_mode}")
         
         results = []
         successful_videos = 0
         total_videos_attempted = 0
+
+        # Initialize Mux uploader if requested (lazy import so CLI doesn't require mux)
+        uploader = None
+        if upload_mode and upload_mode != "none":
+            try:
+                from mux_uploader import MuxUploader
+                uploader = MuxUploader()
+            except Exception as e:
+                print(f"⚠️ Could not initialize MuxUploader: {e}")
+                uploader = None
         
         for i, prompt_data in enumerate(enhanced_prompts, 1):
             title = prompt_data.get("Video Title", f"Video {i}")
@@ -124,6 +136,16 @@ class UnifiedPipeline:
                     print("⏳ Waiting before next model...")
                     import time
                     time.sleep(2)
+
+                # If upload_mode is per-video, upload immediately after success
+                if uploader and upload_mode == "per-video" and video_result.get("status") == "success":
+                    try:
+                        upload_res = uploader.upload_video(video_result.get("file_path"), title=title)
+                        video_result["mux_upload"] = upload_res
+                        print(f"📤 Mux upload result: {upload_res.get('status')}")
+                    except Exception as e:
+                        video_result["mux_upload"] = {"status": "error", "error": str(e)}
+                        print(f"❌ Mux upload failed: {e}")
             
             result = {
                 "title": title,
@@ -142,7 +164,21 @@ class UnifiedPipeline:
                 import time
                 time.sleep(3)
         
-        # Save results
+        # If upload_mode is post, upload successful videos now
+        if uploader and upload_mode == "post":
+            print("📤 Performing post-generation uploads to Mux...")
+            for res in results:
+                for v in res.get("video_results", []):
+                    if v.get("status") == "success" and v.get("file_path"):
+                        try:
+                            upload_res = uploader.upload_video(v.get("file_path"), title=res.get("title"))
+                            v["mux_upload"] = upload_res
+                            print(f"📤 Uploaded {v.get('file_path')}: {upload_res.get('status')}")
+                        except Exception as e:
+                            v["mux_upload"] = {"status": "error", "error": str(e)}
+                            print(f"❌ Post upload failed for {v.get('file_path')}: {e}")
+
+        # Save results (includes any mux_upload metadata)
         results_file = f"video_generation_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(results_file, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
@@ -167,7 +203,8 @@ class UnifiedPipeline:
     
     def run_complete_pipeline(self, 
                             video_models: List[str] = None, 
-                            limit: Optional[int] = None) -> Dict:
+                            limit: Optional[int] = None,
+                            upload_mode: str = "none") -> Dict:
         """
         Run the complete pipeline: script generation → video generation
         
@@ -194,7 +231,8 @@ class UnifiedPipeline:
             
             video_results = self.run_video_generation_from_enhanced_prompts(
                 video_models=video_models,
-                limit=limit
+                limit=limit,
+                upload_mode=upload_mode
             )
             
             return {
@@ -223,6 +261,8 @@ def main():
                        help="Limit number of prompts to process for video generation")
     parser.add_argument("--enhanced-file", default="enhanced_prompts.json",
                        help="Enhanced prompts file to use for video generation")
+    parser.add_argument("--upload-mode", choices=["none", "per-video", "post"], default="none",
+                       help="Upload generated videos to Mux: none (default), per-video (immediate), post (after generation)")
     
     args = parser.parse_args()
     
@@ -239,7 +279,8 @@ def main():
             result = pipeline.run_video_generation_from_enhanced_prompts(
                 enhanced_prompts_file=args.enhanced_file,
                 video_models=args.models,
-                limit=args.limit
+                limit=args.limit,
+                upload_mode=args.upload_mode
             )
             print(f"\n✅ Video generation completed!")
             
@@ -247,7 +288,8 @@ def main():
             # Complete pipeline
             result = pipeline.run_complete_pipeline(
                 video_models=args.models,
-                limit=args.limit
+                limit=args.limit,
+                upload_mode=args.upload_mode
             )
             print(f"\n✅ Complete pipeline finished!")
         
