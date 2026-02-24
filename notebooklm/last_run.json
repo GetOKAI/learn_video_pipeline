@@ -1,0 +1,27 @@
+{
+  "status": "partial",
+  "notebook_url": "https://notebooklm.google.com/notebook/026a55af-d6da-47db-9fcf-281228e522dc",
+  "steps_completed": [
+    "Created new notebook via API",
+    "Opened existing notebook URL",
+    "Closed startup popups",
+    "Opened Sources panel (Fast Research assumed default)",
+    "Entered title and clicked Next",
+    "Started Fast Research",
+    "Imported Fast Research resources",
+    "Resources loaded after import",
+    "Added video title as source",
+    "Closed popups before studio note",
+    "Created studio note",
+    "Added studio note content as source (fallback)",
+    "Refreshed notebook tab before Video Overview",
+    "Opened Video Overview",
+    "Selected Custom Visual Style",
+    "Filled AI host focus guidance",
+    "Started video generation"
+  ],
+  "errors": [
+    "Could not fill custom visual style description"
+  ],
+  "timestamp": "2026-02-17T12:41:23.640003"
+}
